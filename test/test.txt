@@ -1,0 +1,146 @@
+#include <iostream>
+#include <SDL.h>
+#include <array>
+#include <stdlib.h> 
+
+#include "SDL_timer.h"
+#include "particle.h"
+
+using namespace std;
+
+const int WINDOW_WIDTH = 1280;
+const int WINDOW_HEIGHT = 1280;
+
+const int N_PARTICLES = 20;
+
+void pause() {
+    cout << "Press any key to continue" << endl;
+    getchar();
+}
+
+
+void testParticles() {
+    Particle p1(1280/2, 720/2);
+    Particle p2(3, 3);
+
+    cout << p1.toString() << endl;
+    cout << "Moving to target" << endl;
+    p1.moveToTarget(p2);
+    cout << p1.toString() << endl;
+
+    float dist_ = p1.calcDist(p2);
+    cout << dist_ << endl; 
+}
+
+
+
+struct DrawableParticle {
+    Particle p;
+    SDL_Rect rect;
+
+    DrawableParticle() {};
+
+    DrawableParticle(int x, int y) {
+        this->p = Particle(x, y);
+        this->rect = {p.getX(), p.getY(), p.getSize(), p.getSize()};
+    };
+    
+    void moveToTarget(const Particle &p2) {
+        this->p.moveToTarget(p2);
+        this->rect.x = this->p.getX();
+        this->rect.y = this->p.getY();
+    }
+};
+
+
+
+void generateParticles(array<DrawableParticle, N_PARTICLES> &drawableParticles, float bigRadius = 639) {
+    for (int i = 0; i < drawableParticles.size(); i++) {
+        float angle = static_cast<float>(rand()) / RAND_MAX * 2 * M_PI;
+
+        float x_ = bigRadius + bigRadius * cos(angle);
+        float y_ = bigRadius + bigRadius * sin(angle);
+
+        drawableParticles[i] = DrawableParticle(x_, y_);
+        cout << drawableParticles[i].p.toString() << endl;
+    }
+}
+
+
+int main(int argc, char** args) {
+    
+    SDL_Surface* winSurface = NULL;
+    SDL_Window* window = NULL;
+
+    SDL_Event e;
+    bool running = true;
+
+    testParticles();
+    srand(time(NULL));
+
+    array<DrawableParticle, N_PARTICLES> drawableParticles;
+
+    Particle center_particle(WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
+
+    generateParticles(drawableParticles);
+
+    cout << drawableParticles[0].p.toString() << endl;
+    {
+        int res = SDL_Init(SDL_INIT_EVERYTHING);
+        if (res < 0) {
+            cout << "Error" << SDL_GetError() << endl;
+            pause();
+            return 1;
+        }
+    }
+
+    window = SDL_CreateWindow("Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+    if (!window) {
+        cout << "Error Creating Window" << SDL_GetError() << endl;
+        pause();
+        return 1;
+    }
+
+    winSurface = SDL_GetWindowSurface(window);
+	if ( !winSurface ) {
+		cout << "Error getting surface: " << SDL_GetError() << endl;
+		pause();
+		return 1;
+	}
+
+    while (running == true) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type==SDL_QUIT || e.type==SDL_KEYDOWN) {
+                running = false;
+            }
+        }
+        
+        // cout << drawableParticles[0].p.toString() << endl;
+        for (DrawableParticle &dp : drawableParticles) {
+            int* color = dp.p.getColor();
+
+            if (dp.p.getStaticState() == false) {
+                SDL_FillRect(winSurface, &dp.rect, SDL_MapRGB(winSurface -> format, color[0], color[1], color[2]));
+
+                dp.moveToTarget(center_particle);
+
+                SDL_FillRect(winSurface, &dp.rect, SDL_MapRGB(winSurface -> format, 0, 0, 0 ));
+                cout << "Remove" << endl;
+            }
+            if (dp.p.calcDist(center_particle) <= 5 && dp.p.getStaticState() == false) {
+                dp.p.setStaticState(true);
+                SDL_FillRect(winSurface, &dp.rect, SDL_MapRGB(winSurface -> format, color[0], color[1], color[2] ));
+
+            }
+        }
+        
+        SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface -> format, 0, 0, 0 ));
+
+        SDL_Delay(50);
+        SDL_UpdateWindowSurface(window);
+
+    }
+
+
+    return 0;
+}
