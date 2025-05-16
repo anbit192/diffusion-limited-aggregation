@@ -63,10 +63,21 @@ void getRandomColor(DrawableParticle &dp) {
     int offsetValR = rand() % (offsetMax - offsetMin + 1) + offsetMin;
     int offsetValG = rand() % (offsetMax - offsetMin + 1) + offsetMin;
     int offsetValB = rand() % (offsetMax - offsetMin + 1) + offsetMin;
-    dp.p.setColor(currentColor[0] + offsetValR, currentColor[1] + offsetValG, currentColor[2] + offsetValB);
+
+    int offsetColor[3] = {currentColor[0] + offsetValR, currentColor[1] + offsetValG, currentColor[2] + offsetValB};
+
+    for (int i = 0; i < 3; i++) {
+        if (offsetColor[i] > 255) {
+            offsetColor[i] = 255;
+        } else if (offsetColor[i] < 0) {
+            offsetColor[i] = 0;
+        }
+    } 
+
+    dp.p.setColor(offsetColor[0], offsetColor[1], offsetColor[2]);
 }
 
-void generateParticles(array<DrawableParticle, N_PARTICLES> &drawableParticles, float bigRadius = 639, int steps=100) {
+void generateCircleWalkers(array<DrawableParticle, N_PARTICLES> &drawableParticles, float bigRadius = 639, int steps=100) {
 
     for (int i = 0; i < drawableParticles.size(); i++) {
         int offsetMin = -10;
@@ -79,14 +90,34 @@ void generateParticles(array<DrawableParticle, N_PARTICLES> &drawableParticles, 
         float x = bigRadius + bigRadius * cos(angle) + offsetVal;
         float y = bigRadius + bigRadius * sin(angle) + offsetVal;
         
-        int spdX = (CENTER_PARTICLE.getX() - x) / steps + 0.5*offsetVal;  
-        int spdY = (CENTER_PARTICLE.getY() - y) / steps + 0.9*offsetVal;  
+        int spdX = (CENTER_PARTICLE.getX() - x) / steps + 2*offsetVal;  
+        int spdY = (CENTER_PARTICLE.getY() - y) / steps + 1.5*offsetVal;  
 
 
         drawableParticles[i] = DrawableParticle(x, y, spdX, spdY);
         //cout << drawableParticles[i].p.toString() << endl;
     }
 }
+
+
+void generateRandomWalkers(array<DrawableParticle, N_PARTICLES> &drawableParticles,int spd=30, int limitX1=0, int limitX2=WINDOW_WIDTH, int limitY1=0, int limitY2=WINDOW_HEIGHT) {
+    if (limitX1 > limitX2 || limitY1 > limitY2) {
+        cout << "Invalid range" << endl;
+        return;
+    }
+    for (int i = 0; i < drawableParticles.size(); i++) {
+        int randomX = rand() % (limitX2 - limitX1 + 1) + limitX1;
+        int randomY = rand() % (limitY2 - limitY1 + 1) + limitY1;
+
+        int randomSpd = rand() % (2*spd + 1) - spd;
+        if (abs(randomSpd - 0) <= 10) {
+            randomSpd = 15;
+        }
+
+        drawableParticles[i] = DrawableParticle(randomX, randomY, randomSpd, randomSpd);
+    }
+}
+
 
 bool checkConditions(array<DrawableParticle*, N_PARTICLES> &aggregated, DrawableParticle &dp) {
     for (DrawableParticle* ap:aggregated) {
@@ -121,8 +152,8 @@ int main(int argc, char** args) {
     DrawableParticle centerDp = DrawableParticle(CENTER_PARTICLE.getX(), CENTER_PARTICLE.getY(), 0, 0);
 
     aggregatedParticles[0] = &centerDp;
-    generateParticles(drawableParticles);
-
+    generateCircleWalkers(drawableParticles);
+    //generateRandomWalkers(drawableParticles);
     // cout << drawableParticles[0].p.toString() << endl;
     {
         int res = SDL_Init(SDL_INIT_EVERYTHING);

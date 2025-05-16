@@ -1,4 +1,5 @@
 #include "particle.h"
+#include <cstdlib>
 #include <math.h>
 #include <sstream>
 
@@ -18,18 +19,25 @@ void Particle::moveToTarget(const Particle &p) {
     int offsetMax = 30;
 
     int offsetVal = rand() % (offsetMax - offsetMin + 1) + offsetMin;
+    if (abs(offsetVal - 0) <= 5) {
+        offsetVal = 10;
+    }
+
 
     if (this->staticState == false) {
-        if (this->x > 1280 || this->x < 0) {
+        if (this->x >= 1280 || this->x <= 0) {
             this->spdX = -this->spdX;
-            this->x += (spdX + 0.5 * offsetVal);     
+            this->x += (spdX + offsetVal);     
         }
-        if (this->y > 1280 || this->y < 0 ) {
+        if (this->y >= 1280 || this->y <= 0 ) {
             this->spdY = -this->spdY;
-            this->y += (spdY + 0.5 * offsetVal);     
+            this->y += (spdY +  offsetVal);     
         }
-        this->x += spdX;
-        this->y += spdY;
+        if (this->x < 1280 && this->y < 1280) {
+            this->x += spdX;
+            this->y += spdY;
+
+        }
     }
 }
 
