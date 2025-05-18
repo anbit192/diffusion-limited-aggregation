@@ -10,7 +10,7 @@ class Particle {
 
     public: Particle();
     public: Particle(int x, int y, int spdX, int spdY);
-    public: void moveToTarget(const Particle &p);
+    public: void move();
     public: float calcDist(Particle &p);
     public: std::string toString() const;
 

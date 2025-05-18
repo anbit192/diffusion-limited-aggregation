@@ -6,7 +6,7 @@
 Particle::Particle(): x(0), y(0), staticState(false), size(2) {}
 
 
-Particle::Particle(int x, int y, int spdX, int spdY) : x(x), y(y), spdX(spdX), spdY(spdY), staticState(false), size(10) {
+Particle::Particle(int x, int y, int spdX, int spdY) : x(x), y(y), spdX(spdX), spdY(spdY), staticState(false), size(5) {
     color[0] = 247;
     color[1] = 192;
     color[2] = 192;
@@ -14,7 +14,7 @@ Particle::Particle(int x, int y, int spdX, int spdY) : x(x), y(y), spdX(spdX), s
 }
 
 
-void Particle::moveToTarget(const Particle &p) {
+void Particle::move() {
     int offsetMin = -30;
     int offsetMax = 30;
 
@@ -27,11 +27,11 @@ void Particle::moveToTarget(const Particle &p) {
     if (this->staticState == false) {
         if (this->x >= 1280 || this->x <= 0) {
             this->spdX = -this->spdX;
-            this->x += (spdX + offsetVal);     
+            this->x += (spdX);     
         }
         if (this->y >= 1280 || this->y <= 0 ) {
             this->spdY = -this->spdY;
-            this->y += (spdY +  offsetVal);     
+            this->y += (spdY);     
         }
         if (this->x < 1280 && this->y < 1280) {
             this->x += spdX;

@@ -2,40 +2,23 @@
 #include <SDL.h>
 #include <array>
 #include <stdlib.h> 
+#include <vector>
 
-#include "SDL_pixels.h"
-#include "SDL_timer.h"
+//#include "SDL_pixels.h"
+//#include "SDL_timer.h"
+#include "SDL_render.h"
 #include "particle.h"
 
 using namespace std;
 
+// define variables
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 1280;
 
-const int N_PARTICLES = 1500;
+const int N_PARTICLES = 500;
 
-Particle CENTER_PARTICLE(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0, 0);
-
-void pause() {
-    cout << "Press any key to continue" << endl;
-    getchar();
-}
-
-
-void testParticles() {
-    Particle p1(1280/2, 720/2,0,0);
-    Particle p2(3, 3,0,0);
-
-    cout << p1.toString() << endl;
-    cout << "Moving to target" << endl;
-    p1.moveToTarget(p2);
-    cout << p1.toString() << endl;
-
-    float dist_ = p1.calcDist(p2);
-    cout << dist_ << endl; 
-}
-
-
+SDL_Renderer* renderer;
+SDL_Window* window;
 
 struct DrawableParticle {
     Particle p;
@@ -48,14 +31,84 @@ struct DrawableParticle {
         this->rect = {p.getX(), p.getY(), p.getSize(), p.getSize()};
     };
     
-    void moveToTarget(const Particle &p2) {
-        this->p.moveToTarget(p2);
+    void move() {
+        this->p.move();
         this->rect.x = this->p.getX();
         this->rect.y = this->p.getY();
     }
 };
 
-void getRandomColor(DrawableParticle &dp) {
+Particle CENTER_PARTICLE(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0, 0);
+DrawableParticle centerDp = DrawableParticle(CENTER_PARTICLE.getX(), CENTER_PARTICLE.getY(), 0, 0);
+
+// Init SDL things
+void pause() {
+    cout << "Press any key to continue" << endl;
+    getchar();
+}
+
+
+bool initSDL() {
+    if (SDL_Init(SDL_INIT_EVERYTHING) == -1) {
+        std::cout << "Failed to initialize SDL :" << SDL_GetError() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool createWindow() {
+    window = SDL_CreateWindow("Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+    
+    if (window == nullptr) {
+        std::cout << "Failed to create window : " << SDL_GetError();
+        return false;
+    }  
+    return true;
+}
+
+bool createRenderer() {
+    renderer = SDL_CreateRenderer(window,-1 ,0 );
+    if (renderer == nullptr) {
+        std::cout << "Failed to create window : " << SDL_GetError();
+        return false;
+    }
+    return true;
+}
+
+void setupRenderer() {
+    SDL_RenderSetLogicalSize(renderer,WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+}
+
+bool initEverything() {
+    if (!initSDL() || !createWindow() || !createRenderer()) {
+
+        pause();
+        return false;
+    }
+    setupRenderer();
+
+    return true;
+}
+
+// helper functions
+void testParticles() {
+    Particle p1(1280/2, 720/2,0,0);
+    Particle p2(3, 3,0,0);
+
+    cout << p1.toString() << endl;
+    cout << "Moving to target" << endl;
+    p1.move();
+    cout << p1.toString() << endl;
+
+    float dist_ = p1.calcDist(p2);
+    cout << dist_ << endl; 
+}
+
+
+
+void setRandomColor(DrawableParticle &dp) {
     int* currentColor = dp.p.getColor(); 
     int offsetMin = -25;
     int offsetMax = 25;
@@ -119,7 +172,7 @@ void generateRandomWalkers(array<DrawableParticle, N_PARTICLES> &drawableParticl
 }
 
 
-bool checkConditions(array<DrawableParticle*, N_PARTICLES> &aggregated, DrawableParticle &dp) {
+bool checkConditions(vector<DrawableParticle*> &aggregated, DrawableParticle &dp) {
     for (DrawableParticle* ap:aggregated) {
         if (ap) {
             if (ap->p.calcDist(dp.p) <= (1.2 * dp.p.getSize()*dp.p.getSize()) && dp.p.getStaticState() == false) {
@@ -133,51 +186,57 @@ bool checkConditions(array<DrawableParticle*, N_PARTICLES> &aggregated, Drawable
     return false;
 }
 
+// render frame
+void render(array<DrawableParticle, N_PARTICLES> &walkers, vector<DrawableParticle*> &aggregates) {
+    SDL_RenderClear(renderer);
+    if (aggregates.size() > 0) {
+        for (DrawableParticle* dp : aggregates) {
+            if (dp) {
 
-
-int main(int argc, char** args) {
+                int* color = dp->p.getColor();
+                cout << dp->p.toString() << endl;
+                SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], 255);
+                SDL_RenderFillRect(renderer, &dp->rect);
+                //cout << dp->p.toString() << endl;
+            } 
+        }
+    }
     
-    SDL_Surface* winSurface = NULL;
-    SDL_Window* window = NULL;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    for (DrawableParticle &dp : walkers) {
+        if (!dp.p.getStaticState()) {
+            SDL_RenderFillRect(renderer, &dp.rect);
+
+            dp.move();
+
+            if (checkConditions(aggregates, dp)) {
+                dp.p.setStaticState(true);
+                aggregates.push_back(&dp);
+                setRandomColor(dp);
+
+            }
+        }
+    }
+    
+    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+}
+
+// main function
+int main(int argc, char** args) {
 
     SDL_Event e;
     bool running = true;
 
-    testParticles();
-    srand(time(NULL));
-
     array<DrawableParticle, N_PARTICLES> drawableParticles;
-    array<DrawableParticle*, N_PARTICLES> aggregatedParticles; 
-    
-    DrawableParticle centerDp = DrawableParticle(CENTER_PARTICLE.getX(), CENTER_PARTICLE.getY(), 0, 0);
+    vector<DrawableParticle*> aggregatedParticles{&centerDp}; 
 
-    aggregatedParticles[0] = &centerDp;
-    generateCircleWalkers(drawableParticles);
+    initEverything();
     //generateRandomWalkers(drawableParticles);
     // cout << drawableParticles[0].p.toString() << endl;
-    {
-        int res = SDL_Init(SDL_INIT_EVERYTHING);
-        if (res < 0) {
-            cout << "Error" << SDL_GetError() << endl;
-            pause();
-            return 1;
-        }
-    }
-    
-    window = SDL_CreateWindow("Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
-    if (!window) {
-        cout << "Error Creating Window" << SDL_GetError() << endl;
-        pause();
-        return 1;
-    }
-
-    winSurface = SDL_GetWindowSurface(window);
-	if ( !winSurface ) {
-		cout << "Error getting surface: " << SDL_GetError() << endl;
-		pause();
-		return 1;
-	}
-    cout << CENTER_PARTICLE.toString() << endl;
+    generateCircleWalkers(drawableParticles);
     while (running == true) {
         while (SDL_PollEvent(&e)) {
             if (e.type==SDL_QUIT || e.type==SDL_KEYDOWN) {
@@ -185,52 +244,11 @@ int main(int argc, char** args) {
             }
         }
         
-
-        SDL_FillRect(winSurface, NULL, SDL_MapRGB(winSurface -> format, 0, 0, 0 ));
-        // cout << drawableParticles[0].p.toString() << endl;
-
-        if (aggregatedParticles.size() > 0) {
-            for (DrawableParticle* dp : aggregatedParticles) {
-                if (dp) {
-
-                    int* color = dp->p.getColor();
-                    cout << dp->p.toString() << endl;
-                    SDL_FillRect(winSurface, &dp->rect, SDL_MapRGB(winSurface->format, color[0] ,color[1],color[2] ));
-                    //cout << dp->p.toString() << endl;
-
-                } 
-            }
-        }
-
-
-        int i = 0;
-        for (DrawableParticle &dp : drawableParticles) {
-            int* color = dp.p.getColor();
-
-            if (dp.p.getStaticState() == false) {
-                SDL_FillRect(winSurface, &dp.rect, SDL_MapRGB(winSurface -> format, color[0], color[1], color[2]));
-
-                dp.moveToTarget(CENTER_PARTICLE);
-
-                // SDL_FillRect(winSurface, &dp.rect, SDL_MapRGB(winSurface -> format, 0, 0, 0 ));
-                if (checkConditions(aggregatedParticles, dp)) {
-                    dp.p.setStaticState(true);
-                    aggregatedParticles[i] = &dp;
-                    getRandomColor(dp);
-                }
-            }
-            
-
-            i+=1;
-
-        }
+        render(drawableParticles, aggregatedParticles);
         
-
-        SDL_UpdateWindowSurface(window);
-        SDL_Delay(50);
+        SDL_Delay(16);
 
     }
-
 
     return 0;
 }
