@@ -2,14 +2,17 @@
 #include <string>
 
 class Particle {
-    int x, y;
-    int spdX, spdY;
-    bool staticState;
-    int size;
-    int color[3];
+    protected:
+        int x, y;
+        int spdX, spdY;
+        bool staticState;
+        int size;
+        int color[3];
 
     public: Particle();
     public: Particle(int x, int y, int spdX, int spdY);
+    public: Particle(int x, int y, int spdX, int spdY, int size);
+
     public: void move();
     public: float calcDist(Particle &p);
     public: std::string toString() const;

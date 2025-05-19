@@ -2,16 +2,19 @@
 #include <cstdlib>
 #include <math.h>
 #include <sstream>
+#include "config.h"
 
 Particle::Particle(): x(0), y(0), staticState(false), size(2) {}
 
 
-Particle::Particle(int x, int y, int spdX, int spdY) : x(x), y(y), spdX(spdX), spdY(spdY), staticState(false), size(5) {
+Particle::Particle(int x, int y, int spdX, int spdY) : x(x), y(y), spdX(spdX), spdY(spdY), staticState(false), size(config::PSIZE) {
     color[0] = 247;
     color[1] = 192;
     color[2] = 192;
 
 }
+
+Particle::Particle(int x, int y, int spdX, int spdY, int size) : x(x), y(y), spdX(spdX), spdY(spdY), staticState(false), size(size) {}
 
 
 void Particle::move() {
@@ -25,15 +28,15 @@ void Particle::move() {
 
 
     if (this->staticState == false) {
-        if (this->x >= 1280 || this->x <= 0) {
+        if (this->x >= config::WINDOW_WIDTH || this->x <= 0) {
             this->spdX = -this->spdX;
-            this->x += (spdX);     
+            this->x += (spdX + offsetVal);     
         }
-        if (this->y >= 1280 || this->y <= 0 ) {
+        if (this->y >= config::WINDOW_HEIGHT || this->y <= 0 ) {
             this->spdY = -this->spdY;
-            this->y += (spdY);     
+            this->y += (spdY + offsetVal);     
         }
-        if (this->x < 1280 && this->y < 1280) {
+        if (this->x < config::WINDOW_WIDTH && this->y < config::WINDOW_HEIGHT) {
             this->x += spdX;
             this->y += spdY;
 
