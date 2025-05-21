@@ -6,6 +6,4 @@ namespace config {
     const int N_PARTICLES = 2500;
     const int DELAY = 16;
     const int PSIZE = 8;
-}
-
-
+} // namespace config

@@ -2,34 +2,33 @@
 #include <string>
 
 class Particle {
-    protected:
-        int x, y;
-        int spdX, spdY;
-        bool staticState;
-        int size;
-        int color[3];
+  protected:
+    int x, y;
+    int spdX, spdY;
+    bool staticState;
+    int size;
+    int color[3];
 
-    public: Particle();
-    public: Particle(int x, int y, int spdX, int spdY);
-    public: Particle(int x, int y, int spdX, int spdY, int size);
+  public:
+    Particle();
+    Particle(int x, int y, int spdX, int spdY);
+    Particle(int x, int y, int spdX, int spdY, int size);
 
-    public: void move();
-    public: float calcDist(Particle &p);
-    public: std::string toString() const;
+    void move();
+    float calcDist(Particle &p);
 
+    std::string toString() const;
+    int getX();
+    int getY();
 
-    public: int getX();
-    public: int getY();
-    public: bool getStaticState();
-    public: int getSize();
-    public: int* getColor();
+    bool getStaticState();
+    int getSize();
+    int *getColor();
 
-    public: void setX(int val);
-    public: void setY(int val);
-    public: void setStaticState(bool state);
-    public: void setSpdX(int val);
-    public: void setSpdY(int val);
-    
-    public: void setColor(int r, int g, int b);
-
+    void setX(int val);
+    void setY(int val);
+    void setStaticState(bool state);
+    void setSpdX(int val);
+    void setSpdY(int val);
+    void setColor(int r, int g, int b);
 };

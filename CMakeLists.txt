@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(diffusion_limited_aggregation)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)  # Enable debug symbols
+
+add_compile_options(-g -O0 -fno-omit-frame-pointer)
 
 # Gather your source files
 file(GLOB SRCS "src/*.cpp")
